@@ -11,7 +11,10 @@
         </tr>
       </thead>
       <tbody>
-        <!-- ngRepeat: item in list.found -->
+        <tr ng-repeat="item in list.found" class="ng-scope">
+                    <td class="ng-binding"></td><td style="text-align: center;" class="ng-binding"></td><td class="ng-binding"></td>
+                    <td><button ng-click="list.onRemove({index: $index});"></button></td>
+                </tr>
       </tbody>
   </table>
 <div>  <!-- class="table-responsive"  -->
