@@ -78,6 +78,7 @@
 
         // return processed items
         return foundItems;
+        console.log(foundItems);
       });
     };
   }
