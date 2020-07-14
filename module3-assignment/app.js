@@ -1,77 +1,94 @@
-(function () {
-'use strict';
-
-angular.module('ShoppingListApp', [])
-.controller('ShoppingListAddController', ShoppingListAddController)
-.controller('ShoppingListShowController', ShoppingListShowController)
-.service('ShoppingListService', ShoppingListService);
-
-ShoppingListAddController.$inject = ['ShoppingListService'];
-function ShoppingListAddController(ShoppingListService) {
-  var itemAdder = this;
-    itemAdder.removeItem = function (itemIndex) {
-    ShoppingListService.removeItem(itemIndex);
-      itemAdder.message = ShoppingListService.errors();
-          itemAdder.messages = ShoppingListService.errorz();
-
-  };
-
-itemAdder.toBuy = ShoppingListService.getItems();
-  itemAdder.messages = ShoppingListService.errorz();
+(function() {
+  'use strict';
+  angular
+    .module('NarrowItDownApp', [])
+    .controller('NarrowItDownController', NarrowItDownController)
+    .service('MenuSearchService', MenuSearchService)
+    .directive('foundItems', FoundItemsDirective)
+    .factory('MenuSearchFactory', MenuSearchFactory)
+    .constant('ApiBasePath', "https://davids-restaurant.herokuapp.com");
 
 
-}
-ShoppingListShowController.$inject = ['ShoppingListService'];
-function ShoppingListShowController(ShoppingListService) {
-  var showList = this;
+  function FoundItemsDirective() {
+    var ddo = {
+      templateUrl: 'foundItems.html',
+      scope: {
+        found: '<',
+        onRemove: '&'
+      },
+      controller: FoundItemsDirectiveController,
+      controllerAs: 'list',
+      bindToController: true
+    };
+    return ddo;
+  }
 
-  showList.bought = ShoppingListService.getItem();
+  function FoundItemsDirectiveController() {
+    var list = this;
 
-
-}
-
-
-function ShoppingListService() {
-  var service = this;
-  var toBuy = [{name : "cookies",quantity : "10"},{name : "drinks",quantity : "15"},{name : "snacks",quantity : "20"},{name : "milk",quantity : "05"},{name : "choclates",quantity : "50"}];
-
-  var bought = [];
-  var items;
-
-  service.removeItem = function (itemIndex) {
-
- items=  toBuy.splice(itemIndex, 1);
-
- var item = {
-     name: items[0]["name"],
-     quantity:items[0]["quantity"],
-   };
- bought.push(item);
-
-
-
-  };
-  service.errors = function () {
-    if (toBuy.length == 0)
-    {
-return "Everything is bought!";
+    list.isEmpty = function() {
+      return list.found != undefined && list.found.length === 0;
     }
-  };
-    service.errorz = function () {
-      if(bought.length == 0){
-      return "Nothing  Bought Yet :(";
-    }
-    else if(bought.length >= 0){
-      return undefined;
-    }
-  };
+  }
 
-  service.getItems = function () {
-    return toBuy;
-  };
-  service.getItem = function () {
-    return bought;
-  };
-}
+  NarrowItDownController.$inject = ['MenuSearchService'];
+  function NarrowItDownController(MenuSearchService) {
+    var ndController = this;
+
+    ndController.searchTerm = "";
+
+    ndController.narrowIt = function() {
+      if (ndController.searchTerm === "") {
+        ndController.items = [];
+        return;
+      }
+      var promise = MenuSearchService.getMatchedMenuItems(ndController.searchTerm);
+      promise.then(function(response) {
+        ndController.items = response;
+      })
+      .catch(function(error) {
+        console.log("Error:", error);
+      });
+    };
+
+    ndController.removeItem = function(index) {
+      ndController.items.splice(index, 1);
+    };
+  }
+
+  MenuSearchService.$inject = ['$http', 'ApiBasePath'];
+  function MenuSearchService($http, ApiBasePath) {
+    var service = this;
+
+    service.getMatchedMenuItems = function(searchTerm) {
+        return $http({
+          method: 'GET',
+          url: (ApiBasePath + '/menu_items.json')
+        }).then(function (result) {
+        // process result and only keep items that match
+        var items = result.data.menu_items;
+
+        var foundItems = [];
+
+        for (var i = 0; i < items.length; i++) {
+          if (items[i].description.toLowerCase().indexOf(searchTerm.toLowerCase()) >= 0) {
+            foundItems.push(items[i]);
+          }
+        }
+
+        // return processed items
+        return foundItems;
+      });
+    };
+  }
+
+
+  function MenuSearchFactory() {
+    var factory = function () {
+      return new MenuSearchService();
+    };
+
+    return factory;
+  }
 
 })();
