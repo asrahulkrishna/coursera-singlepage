@@ -1,5 +1,5 @@
-<ol>
-	<li ng-repeat="category in $ctrl.categories" class="btn btn-warning" ui-sref="items({categoryShortName: category.short_name, categoryName:category.name})">
+<ol class="list-group">
+	<li style="font-size:20px" ng-repeat="category in $ctrl.categories"  ui-sref="items({categoryShortName: category.short_name, categoryName:category.name})">
 		{{category.name}}
 	</li>
 </ol>
